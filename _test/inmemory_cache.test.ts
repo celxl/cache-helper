@@ -1,4 +1,4 @@
-import { getCacheInstance } from '../src/inmemory-cache';
+import { InMemoryCacheClass, getCacheInstance } from '../index';
 const ttl = 5
 
 describe('Class initialization - error handling', () => {
@@ -31,39 +31,40 @@ describe('Class initialization', () => {
 });
 
 describe('Cache usage', () => {
-    let cache: any;
+    let cache: InMemoryCacheClass;
+
     beforeAll(() => {
         cache = getCacheInstance();
     });
 
     it('Should store value in cache', async () => {
-        const 
+        const
             input = 5,
             output = 5;
-            
-        await cache.set('test1.1', input);
+
+        cache.set('test1.1', input);
         const result = await cache.get('test1.1');
 
         expect(result).toBe(output);
     });
 
-    it('Should execute callback', async ()=> {
-        const callback = jest.fn(()=> {return 1});
-        
-        const result = await cache.get('test1.2', ()=>{
+    it('Should execute callback', async () => {
+        const callback = jest.fn(() => { return 1 });
+
+        const result = await cache.get('test1.2', () => {
             return callback();
         });
 
         expect(callback).toHaveBeenCalled();
         expect(result).toBe(1);
-        
+
     });
 
-    it('Should not execute callback', async ()=> {
-        const callback = jest.fn(()=> {return 1});
-        
+    it('Should not execute callback', async () => {
+        const callback = jest.fn(() => { return 1 });
+
         cache.set('test1.3', 5);
-        const result = await cache.get('test1.3', ()=>{
+        const result = await cache.get('test1.3', () => {
             return callback();
         });
 
@@ -71,29 +72,29 @@ describe('Cache usage', () => {
         expect(result).toBe(5);
     });
 
-    it('Should execute/wait for promise', async ()=> {
+    it('Should execute/wait for promise', async () => {
         const callback = jest.fn(async () => {
             await new Promise(resolve => setTimeout(resolve, 500))
             return 1
         });
-        
-        const result = await cache.get('test1.4', ()=>{
+
+        const result = await cache.get('test1.4', () => {
             return callback();
         });
 
         expect(callback).toHaveBeenCalled();
         expect(result).toBe(1);
-        
+
     });
 
-    it('Should not execute/wait for promise', async ()=> {
+    it('Should not execute/wait for promise', async () => {
         const callback = jest.fn(async () => {
             await new Promise(resolve => setTimeout(resolve, 500))
             return 1
         });
-        
+
         cache.set('test1.5', 5);
-        const result = await cache.get('test1.5', ()=>{
+        const result = await cache.get('test1.5', () => {
             return callback();
         });
 
@@ -105,7 +106,7 @@ describe('Cache usage', () => {
         cache.clear();
         const output = ['hello', 'world', 'happy'];
 
-        output.map( key => cache.set(key, 0) );
+        output.map(key => cache.set(key, 0));
         const result = cache.getKeys();
 
         expect(result).toEqual(output);
@@ -117,11 +118,11 @@ describe('Cache usage', () => {
             input = ['hello', 'world', 'happy'],
             output = input.slice(1);
 
-        input.map( key => cache.set(key, 0) );
+        input.map(key => cache.set(key, 0));
         cache.delete(input[0]);
 
         const
-            cachedResult = null, 
+            cachedResult = null,
             result = cache.getKeys();
 
         expect(result).toEqual(output);
@@ -132,41 +133,41 @@ describe('Cache usage', () => {
         const
             input = 5,
             output = null;
-            
-        await cache.set('test', input);
+
+        cache.set('test', input);
         const time = cache.cacheTtl;
-        
-        await new Promise(resolve => setTimeout(resolve, time*1000));
-        
+
+        await new Promise(resolve => setTimeout(resolve, time * 1000));
+
         const result = await cache.get('test');
         expect(output).toBe(result);
-    },(ttl+5)*1000);
+    }, (ttl + 5) * 1000);
 
 });
 
 describe('Class wrong usage', () => {
-    let cache: any;
+    let cache: InMemoryCacheClass;
     beforeAll(() => {
         cache = getCacheInstance()
     });
 
     it('Should should trow missing argument error - get', async () => {
-        expect(async ()=>{
-            await cache.get();
+        expect(async () => {
+            await cache.get(undefined as unknown as string);
         }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
     });
 
     it('Should should trow missing argument error - set', async () => {
-        expect(async ()=>{
-            await cache.set();
-        }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
+        expect(() => {
+            cache.set(undefined as unknown as string, 5);
+        }).toThrow('Missing argument exception: key parameter is mandatory');
     });
 
     it('Should should trow missing argument error - set', async () => {
-        expect(async ()=>{
-            await cache.delete();
-        }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
+        expect(() => {
+            cache.delete(undefined as unknown as string);
+        }).toThrow('Missing argument exception: key parameter is mandatory');
     });
-    
+
 
 })

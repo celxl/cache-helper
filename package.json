@@ -2,8 +2,10 @@
   "name": "inmemory-cache",
   "version": "1.0.0",
   "description": "In memory cache class to facilitate caching withing application. using singleton pattern to ensure usage of same instance",
-  "main": "\"\"",
+  "main": "./dist/inmemory-cache.js",
   "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build",
     "test": "npx jest --watchAll"
   },
   "keywords": [

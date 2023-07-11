@@ -1,2 +1,7 @@
-.vscode
+.vscode/
 node_modules/
+dist/
+
+#config files
+.npmignore
+.yalcignore

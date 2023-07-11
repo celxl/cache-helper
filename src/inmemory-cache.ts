@@ -28,7 +28,7 @@ interface IErrorHandlerOptions {
     type?: string
 }
 
-export var instance: InMemoryCache;
+var instance: InMemoryCache;
 
 /**
  * 
@@ -184,3 +184,6 @@ export function getCacheInstance(options?: IInMemoryCacheOptions): InMemoryCache
 
     return instance;
 }
+
+export type InMemoryCacheClass = InMemoryCache;
+

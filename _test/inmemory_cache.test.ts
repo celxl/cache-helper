@@ -74,7 +74,7 @@ describe('Cache usage', () => {
 
     it('Should execute/wait for promise', async () => {
         const callback = jest.fn(async () => {
-            await new Promise(resolve => setTimeout(resolve, 500))
+            await new Promise(resolve => setTimeout(resolve, 1000))
             return 1
         });
 
@@ -89,7 +89,7 @@ describe('Cache usage', () => {
 
     it('Should not execute/wait for promise', async () => {
         const callback = jest.fn(async () => {
-            await new Promise(resolve => setTimeout(resolve, 500))
+            await new Promise(resolve => setTimeout(resolve, 1000))
             return 1
         });
 
@@ -100,6 +100,33 @@ describe('Cache usage', () => {
 
         expect(callback).not.toHaveBeenCalled();
         expect(result).toBe(5);
+    });
+
+    it('Should throw callback error - promise', async () => {
+        const callback = jest.fn(async () => {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            throw new Error('Ups there is an error');
+        });
+
+        expect( async() => {
+            await cache.get('test1.6', () => {
+                return callback();
+            });
+        }).rejects.toThrow('Ups there is an error');
+
+    });
+
+    it('Should throw callback error - function', async () => {
+        const callback = jest.fn( () => {
+            throw new Error('Ups there is an error');
+        });
+
+        expect( async () => {
+            await cache.get('test1.7', () => {
+                return callback();
+            });
+        }).rejects.toThrow('Ups there is an error');
+
     });
 
     it('Should get stored keys', async () => {

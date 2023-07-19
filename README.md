@@ -1,4 +1,4 @@
-# In Memory Cache Class
+# Cache Helper Class
 
 ## Summary
 Minimalistic cache tool to help with caching in nodejs applications. 
@@ -117,6 +117,8 @@ const cache = getCacheInstance(); note how not specifying parameters, since inst
 
 ```
 
+## Comming soon
+Add reddis, so the class can be configuralbe to either in-memory or redis cache
 ## Conclusions
 Very simple way to handle cache with minimum dependencies, that should help you speed up your work.
 

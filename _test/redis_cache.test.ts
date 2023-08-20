@@ -1,31 +1,55 @@
-import { CacheHelper, getCacheInstance } from '../index';
-import { DestroyCacheInstance } from '../src/cache-factory';
-const ttl = 5
+import { CacheHelper, getCacheInstance, DestroyCacheInstance } from '../index';
+
+const ttl = 10
 
 describe('Class initialization - error handling', () => {
     it('Should throw error - wrong params cacheEnable type', () => {
-
-       expect(async () => {
-           return await getCacheInstance({ 
-                cacheEnable: "asdf" as unknown as boolean, cacheTtl: 5, type: 'in-memory' })
-            
-        }).rejects.toThrow("Type argument exception: options.cacheEnable parameter must be type boolean");
+        expect(async () => {
+           return await getCacheInstance({ cacheEnable: "asdf" as unknown as boolean, cacheTtl: 5, type: 'in-memory' });
+        })
+            .rejects.toThrow("Type argument exception: options.cacheEnable parameter must be type boolean");
     });
 
     it('Should throw error - wrong params cacheTtl type', () => {
-        expect(async () => {
+        expect(async() => {
             return await getCacheInstance({ cacheEnable: true, cacheTtl: '5' as unknown as number, type: 'in-memory' });
-        }).rejects.toThrow("Type argument exception: options.cacheTtl parameter must be type number");
+        })
+            .rejects.toThrow("Type argument exception: options.cacheTtl parameter must be type number");
     });
 
 });
 
 describe('Class initialization', () => {
+    afterAll(() => {
+        DestroyCacheInstance();
+    })
 
     it('Should always return same object', async () => {
-        await getCacheInstance({ cacheEnable: true, cacheTtl: ttl, type: 'in-memory' });
+        await getCacheInstance({ 
+            cacheEnable: true,
+            cacheTtl: ttl,
+            type: 'redis',
+            redisOptions: {
+                socket: {
+                    host: 'localhost',
+                    port: 6379
+                }
+            } 
+        });
 
-        const cache2 = await getCacheInstance({ cacheEnable: true, cacheTtl: (ttl + 20), type: 'in-memory' });
+        const cache2: CacheHelper = await getCacheInstance({ 
+            cacheEnable: true,
+            cacheTtl: (ttl + 10),
+            type: 'redis',
+            redisOptions: {
+                socket: {
+                    host: 'localhost',
+                    port: 6379
+                }
+            } 
+        });
+
+        
 
         expect(cache2.cacheTtl).toBe(ttl);
     });
@@ -37,11 +61,21 @@ describe('Cache usage', () => {
 
     beforeAll(async () => {
         DestroyCacheInstance();
-        cache = await getCacheInstance({
+        cache = await getCacheInstance({ 
             cacheEnable: true,
             cacheTtl: ttl,
-            type: "in-memory"
+            type: 'redis',
+            keyPrefix: "test",
+            redisOptions: {
+                //url: "redis://localhost:6379"
+                socket: {
+                    host: 'localhost',
+                    port: 6379
+                }
+            } 
         });
+
+        
     });
 
     it('Should store value in cache', async () => {
@@ -49,7 +83,8 @@ describe('Cache usage', () => {
             input = 5,
             output = 5;
 
-        cache.set('test1.1', input);
+        await cache.set('test1.1', input);
+        
         const result = await cache.get('test1.1');
 
         expect(result).toBe(output);
@@ -137,17 +172,17 @@ describe('Cache usage', () => {
     });
 
     it('Should get stored keys', async () => {
-        cache.clear();
+        await cache.clear();
         const output = ['hello', 'world', 'happy'];
 
-        output.map(key => cache.set(key, 0));
+        output.map(async (key) => await cache.set(key, 0));
         const result = await cache.getKeys();
-        
-        expect(result).toEqual(output);
+
+        expect(result.sort()).toEqual(output.sort());
     });
 
     it('Should delete stored key-value', async () => {
-        cache.clear();
+        await cache.clear();
         const
             input = ['hello', 'world', 'happy'],
             output = input.slice(1);
@@ -156,10 +191,10 @@ describe('Cache usage', () => {
         await cache.delete(input[0]);
 
         const
-            cachedResult = null,
+            cachedResult = await cache.get(input[0]),
             result = await cache.getKeys();
 
-        expect(result).toEqual(output);
+        expect(result.sort()).toEqual(output.sort());
         expect(cachedResult).toBeNull();
     });
 
@@ -170,6 +205,7 @@ describe('Cache usage', () => {
 
         await cache.set('test', input);
         const time = cache.cacheTtl;
+        
 
 
         await new Promise(resolve => setTimeout(resolve, time * 1000));
@@ -180,34 +216,3 @@ describe('Cache usage', () => {
 
 });
 
-describe('Class wrong usage', () => {
-    // let cache: CacheHelper;
-    // beforeAll(async() => {
-    //     cache = await getCacheInstance({cacheEnable: true,
-     //       cacheTtl: ttl}{
-    //         cacheEnable: true,
-    //         cacheTtl: ttl,
-    //         type: "in-memory"
-    //     });
-    // });
-
-    // it('Should should trow missing argument error - get', async () => {
-
-    //     await expect( cache.get(undefined as unknown as string) )
-    //         .toThrow('Missing argument exception: key parameter is mandatory');
-    // });
-
-    // it('Should should trow missing argument error - set', async () => {
-    //     expect(async () => {
-    //         await cache.set(undefined as unknown as string, 5);
-    //     }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
-    // });
-
-    // it('Should should trow missing argument error - set', async () => {
-    //     expect(async () => {
-    //          await cache.delete(undefined as unknown as string);
-    //     }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
-    // });
-
-
-})

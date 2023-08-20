@@ -34,7 +34,10 @@ describe('Cache usage', () => {
     let cache: InMemoryCacheClass;
 
     beforeAll(() => {
-        cache = getCacheInstance();
+        cache = getCacheInstance({
+            cacheEnable: true,
+            cacheTtl: ttl
+        });
     });
 
     it('Should store value in cache', async () => {
@@ -163,7 +166,7 @@ describe('Cache usage', () => {
 
         cache.set('test', input);
         const time = cache.cacheTtl;
-
+        
         await new Promise(resolve => setTimeout(resolve, time * 1000));
 
         const result = await cache.get('test');
@@ -175,7 +178,8 @@ describe('Cache usage', () => {
 describe('Class wrong usage', () => {
     let cache: InMemoryCacheClass;
     beforeAll(() => {
-        cache = getCacheInstance()
+        cache = getCacheInstance({cacheEnable: true,
+            cacheTtl: ttl})
     });
 
     it('Should should trow missing argument error - get', async () => {

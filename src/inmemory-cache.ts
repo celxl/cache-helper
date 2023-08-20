@@ -38,7 +38,7 @@ class InMemoryCache {
     private _cacheEnable: boolean;
     private _cacheTtl: number;
 
-    constructor(options: IInMemoryCacheOptions = {cacheEnable: true, cacheTtl: 1}) {
+    constructor(options: IInMemoryCacheOptions) {
         this._errorHandler({
             name: 'options.cacheEnable',
             rule: ErrorHandlerRuleEnum.TYPE,
@@ -55,7 +55,7 @@ class InMemoryCache {
         
         this._cacheEnable = options.cacheEnable;
         this._cacheTtl = options.cacheTtl;
-        this._cache = (this._cacheEnable) ? new NodeCache({ stdTTL: this._cacheTtl }) : null as unknown as NodeCache;
+        this._cache = (this._cacheEnable) ? new NodeCache({ stdTTL: this._cacheTtl || 1 }) : null as unknown as NodeCache;
     }
 
     public get cacheTtl(): number {
@@ -178,7 +178,7 @@ class InMemoryCache {
 
 }
 
-export function getCacheInstance(options?: IInMemoryCacheOptions): InMemoryCache{
+export function getCacheInstance(options: IInMemoryCacheOptions): InMemoryCache{
     if(!instance) 
         instance = new InMemoryCache(options);
 

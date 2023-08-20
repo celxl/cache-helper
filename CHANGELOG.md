@@ -1,5 +1,8 @@
 # In Memory Cache Class wrapper
 
+## 1.0.1
+ - fix: Class initialization - options parameter is now mandatory
+
 ## 1.0.0
  - feat: Release - Cache class wrapper for node-cache library
  - feat: NPM repository - ready to be published

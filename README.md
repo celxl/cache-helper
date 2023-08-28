@@ -4,7 +4,8 @@
 Minimalistic cache tool to help with caching in nodejs applications. 
 
 ## Dependencies
- - node-cache: in memory cache library
+ - node-cache: for memory cache support
+ - redis: for redis cache support 
  - typescript
 
 ## Why caching?
@@ -14,16 +15,8 @@ When using cache is important to keep that in mind:
  - Is easy to forget your application is using cache which can lead unexpected results and tricky to debug.  
 
 ## Why use this library?
-node-cache provides several of utilities to handle caching in your application: **get data from cache**, **store data in cache**, **remove partial data from cache** and **clear cache** among the most relevant and the ones we mostly use, using a cache-key to access a particular peace of data.  
-Eg. 
-```
-//store data in cache
-cache.set('color-list', ['red', 'blue', 'black']);
-//get data from cache
-var colors = cache.get('color-list');
-
-//now the variable colors has the array previously stored in the cache
-```  
+**cache-helper** aims to simplify caching implementation in your application, with minimum setup this helper provides and easy way to manage caching, now since version 2.0.0 you can choose either memory or redis cache.
+  
 ### Normally when using cache there is small workflow involve:
  1. Initialize your cache (and this can be inmemory but also with other tools like Redis) and define expiration time.
  2. Obtain data from cache.
@@ -59,13 +52,14 @@ async getColorList() {
 //the example is using promises to make it more realistic
 ```  
 
-The goal of InMemoryCache library is to simplify those steps providing less verbose way to handle the caching and a ready to use class. So better than explain lets just see the same example.
+The goal of cache-helper library is to simplify those steps providing less verbose way to handle the caching and a ready to use class. So better than explain lets just see the same example.
 ```
-//import InMemoryCache
-import { getCacheInstance } from 'inmemory-cache' ;
+//import
+import { getCacheInstance } from 'cache-helper' ;
 
 //initialize cache
-const cache = getCacheInstance({
+const cache = await getCacheInstance({
+    type: 'in-memory' // for memory cache
     cacheEnable: true, // making cache enable
     cacheTtl: 60 // expiration time for 60 seconds
   });
@@ -91,34 +85,66 @@ Second when initializing the cache class we can specify if want want the cache e
 Finally the get method accept a callback function that will do the normal [cache steps](#normally-when-using-cache-there-is-small-workflow-involve) for you, working even if the cache is disabled. Note the callback will only be executed when cache is enable and when the given key is not in use.  
 
 ## Usage
-Install the library ```npm install inmemory-cache``` (library is not public in npm repo, at least not yet)  
-The recommendation is to initialize the cache in your application entry file eg. in server.ts of an express app, or the main.ts of a nestjs app.
+Install the library ```npm install cache-helper``` (library is not public in npm repo, at least not yet)  
+The recommendation is to initialize the cache in one file withing your application and export it to avoid the need of setting every time.
 ```
-//This is your app entry file
+//utils/cache.ts consider this file
 
 //import
-import {getCacheInstance} from 'inmemory-cache';
+import {getCacheInstance} from 'cache-helper';
 
-//initialization
-getCacheInstance({
+
+//initialization memory cache
+export const cache = async () => {
+  return await getCacheInstance({
+    type: 'in-memory'
     cacheEnable: process.env['CACHE_ENABLE'] === 'yes',
     cacheTtl: process.env['CACHE_EXPIRATION']? parseInt(process.env['CACHE_EXPIRATION']) : 1
   });
+}
+
+//OR initialization redis cache
+export const cache = async () => {
+  return await getCacheInstance({ 
+            cacheEnable: true,
+            cacheTtl: ttl,
+            type: 'redis',
+            keyPrefix: "test", //optional but recommended when using redis
+            redisOptions: {
+                url: "redis://localhost:6379"
+            } 
+        });
+  /*
+  NOTE: redisOptions are the options of redis https://www.npmjs.com/package/redis
+  */
+}
 
 // then in any other file where you need caching
 
-//import
-import {getCacheInstance} from 'inmemory-cache';
+//import from your initialization cache
+import {cache} from './utils/cache';
 
-//get the cache instance
-const cache = getCacheInstance(); note how not specifying parameters, since instance was created in entry file
+// Now regardless if you are using redis or memory cache; usage is the same.  
+// Just focus in your app and use caching for your needs without worrying in cache settings,  
+// disconnecting events (in case of redis) or similar issues
 
+//get cache
+async function getColor() {
+  return await cache.get('color');
+}
+
+//set some key
+async function setColor(colors: string[]) {
+  return await cache.set('color', colors);
+}
 //now you can cache
 
 ```
+Extra points:  
+* At cache initialization you can define *keyPrefix* then every cache key you set/get will internally prefixed 
+with value from *keyPrefix*. For memory cache not really important, but if you using redis you may want to set a key prefix to avoid conflict with other services that use same redis instance
+* When using cache you don't really want an error in your caching mechanism to break your app, so cache helper makes sure specially with redis that any internal issues, eg. redis instance down, does not affect app workflow 
 
-## Comming soon
-Add reddis, so the class can be configuralbe to either in-memory or redis cache
 ## Conclusions
 Very simple way to handle cache with minimum dependencies, that should help you speed up your work.
 

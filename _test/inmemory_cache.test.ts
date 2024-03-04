@@ -1,5 +1,5 @@
 import { CacheHelper, getCacheInstance } from '../index';
-import { DestroyCacheInstance } from '../src/cache-factory';
+// import { DestroyCacheInstance } from '../src/cache-factory';
 const ttl = 5
 
 describe('Class initialization - error handling', () => {
@@ -22,12 +22,20 @@ describe('Class initialization - error handling', () => {
 
 describe('Class initialization', () => {
 
-    it('Should always return same object', async () => {
+    it('Should always return same object - same ttl, cache-type, prefix', async () => {
+        await getCacheInstance({ cacheEnable: true, cacheTtl: ttl, type: 'in-memory' });
+
+        const cache2 = await getCacheInstance({ cacheEnable: true, cacheTtl: ttl, type: 'in-memory' });
+        
+        expect(cache2.cacheTtl).toBe(ttl);
+    });
+
+    it('Should always diff instance - diff ttl, cache-type, prefix', async () => {
         await getCacheInstance({ cacheEnable: true, cacheTtl: ttl, type: 'in-memory' });
 
         const cache2 = await getCacheInstance({ cacheEnable: true, cacheTtl: (ttl + 20), type: 'in-memory' });
 
-        expect(cache2.cacheTtl).toBe(ttl);
+        expect(cache2.cacheTtl == (ttl + 20)).toBeTruthy();
     });
 
 });
@@ -36,7 +44,6 @@ describe('Cache usage', () => {
     let cache: CacheHelper;
 
     beforeAll(async () => {
-        DestroyCacheInstance();
         cache = await getCacheInstance({
             cacheEnable: true,
             cacheTtl: ttl,

@@ -1,4 +1,4 @@
-import { CacheHelper, getCacheInstance, DestroyCacheInstance } from '../index';
+import { CacheHelper, getCacheInstance } from '../index';
 
 const ttl = 10
 
@@ -20,11 +20,8 @@ describe('Class initialization - error handling', () => {
 });
 
 describe('Class initialization', () => {
-    afterAll(() => {
-        DestroyCacheInstance();
-    })
 
-    it('Should always return same object', async () => {
+    it('Should always return same object - same ttl, type and prefix', async () => {
         await getCacheInstance({ 
             cacheEnable: true,
             cacheTtl: ttl,
@@ -39,7 +36,7 @@ describe('Class initialization', () => {
 
         const cache2: CacheHelper = await getCacheInstance({ 
             cacheEnable: true,
-            cacheTtl: (ttl + 10),
+            cacheTtl: ttl,
             type: 'redis',
             redisOptions: {
                 socket: {
@@ -60,7 +57,6 @@ describe('Cache usage', () => {
     let cache: CacheHelper;
 
     beforeAll(async () => {
-        DestroyCacheInstance();
         cache = await getCacheInstance({ 
             cacheEnable: true,
             cacheTtl: ttl,

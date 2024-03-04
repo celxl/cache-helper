@@ -1,5 +1,6 @@
-import { createClient, RedisClientType } from 'redis';
+import { RedisClientOptions, RedisClientType, RedisModules } from 'redis';
 import { CacheHelper, ICacheHelperOptions } from './cache-helper';
+import geRedisConnection from './redis-connection';
 
 export { RedisClientOptions, RedisClientType } from 'redis';
 
@@ -22,16 +23,23 @@ export class RedisCache extends CacheHelper {
 
 
     static async build(options: ICacheHelperOptions): Promise<RedisCache> {
-        const config = { ...options.redisOptions };
+        const config: RedisClientOptions<
+            RedisModules,
+            Record<string, never>,
+            Record<string, never>
+        > = { ...options.redisOptions } as unknown as RedisClientOptions<
+            RedisModules,
+            Record<string, never>,
+            Record<string, never>
+            >;
 
         config.socket = { ...options?.redisOptions?.socket };
 
-        const redisClient = createClient(config);
+        const redisClient = geRedisConnection(config);
 
         if (options.cacheEnable) {
 
-
-            await redisClient.connect()
+            !redisClient.isOpen && await redisClient.connect()
                 .catch(async (err: any) => {
                     throw new Error(`RedisCacheError: ${err}`);
                 });

@@ -1,3 +1,3 @@
-export {getCacheInstance, DestroyCacheInstance} from './cache-factory';
+export {getCacheInstance} from './cache-factory';
 export { CacheHelper, ICacheHelperOptions } from "./cache-helper";
 

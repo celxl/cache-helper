@@ -2,19 +2,25 @@ import { CacheHelper, ICacheHelperOptions } from "./cache-helper";
 import { InMemoryCache } from "./inmemory-cache";
 import { RedisCache } from "./redis-cache";
 
-var cacheInstance: any = null;
+var cacheInstanceMap: Map<string, CacheHelper> = new Map();
 
 
 
-export async function getCacheInstance(options?: ICacheHelperOptions): Promise<CacheHelper> {
-    if(!cacheInstance){
+export async function getCacheInstance(options: ICacheHelperOptions): Promise<CacheHelper> {
+    let 
+        mapKey = `${options.type}-${options.cacheTtl}-${options.keyPrefix || ''}`,
+        instance: CacheHelper = cacheInstanceMap.get(mapKey) as CacheHelper;
+
+    if(!instance){
         switch (options?.type) {
             case 'in-memory':
-                cacheInstance = new InMemoryCache(options);
+                instance = new InMemoryCache(options);
+                cacheInstanceMap.set(mapKey, instance);
                 break;
 
             case "redis":
-                cacheInstance = await RedisCache.build(options);
+                instance = await RedisCache.build(options);;
+                cacheInstanceMap.set(mapKey, instance);
                 break;
         
             default:
@@ -22,8 +28,8 @@ export async function getCacheInstance(options?: ICacheHelperOptions): Promise<C
         }
         
     }
-    return cacheInstance ;
+    return instance ;
 }
 
-export function DestroyCacheInstance() {cacheInstance = null}
+// export function DestroyCacheInstance() {cacheInstanceMap = null}
 

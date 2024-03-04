@@ -1,5 +1,9 @@
 # In Memory Cache Class wrapper
 
+## 3.0.0
+ - breaking changes: Support multiple cache instances
+ - dependencies: updated
+
 ## 2.0.0
  - breaking changes: Added support for redis cache
  - breaking changes: Initialization - getCacheInstance() function is now asynchronous

@@ -9,10 +9,19 @@ Minimalistic cache tool to help with caching in nodejs applications.
  - typescript
 
 ## Why caching?
-Cache is used to improve performance within application taken data from memory instead other sources that are not as fast. Eg. consider an application that needs to use HTTP request to other application to fetch some data, with cache you won't need to make a new request every time data is needed, simply make the request the first time and store the data in cache.  
+Cache is used to improve performance within application taken data from memory or caching services like *Redis* instead other sources that are not as fast. Eg. consider an application that needs to use HTTP request to other application to fetch some data, with cache you won't need to make a new request every time data is needed, simply make the request the first time and store the data in cache.  
 When using cache is important to keep that in mind:
  - Data you store in cache can change in realtime so is important to set cache expiration time according to your needs.
- - Is easy to forget your application is using cache which can lead unexpected results and tricky to debug.  
+ - Is easy to forget your application is using cache which can lead unexpected results and tricky to debug.
+
+## Features
+ * In memory cache support
+ * Redis cache support
+ * Multiple instates efficiently supported.
+   * Initialized instates with the exact same options will always return the exact same instate (reference to an existing instance already created).
+   * Initialized instates with different options than an existing one will return new instance.
+   * Initializing different *Redis* instance will return different instances, **but they still share the same redis connection**, avoiding multiple connections to same redis service. 
+ * Framework agnostic     
 
 ## Why use this library?
 **cache-helper** aims to simplify caching implementation in your application, with minimum setup this helper provides and easy way to manage caching, now since version 2.0.0 you can choose either memory or redis cache.
@@ -26,7 +35,7 @@ When using cache is important to keep that in mind:
  4. Obtain data from real source, eg query to db.
  5. Store data in cache to be available for next time.  
 Lets see a code example using node-cache
-```
+```TypeScript
 //import cache library
 import NodeCache from 'node-cache';
 
@@ -80,14 +89,12 @@ async getColorList() {
 }
 
 ```
-First notice the library use singleton pattern when caching the cache-keys are the same, so there is not much sense in making new objects every time that will be consuming extra memory.  
-Second when initializing the cache class we can specify if want want the cache enable, the recommendation here is to have an environment variable specifying that so you can easily turn cache on/off in your app, which will be very handy when for debugging
-Finally the get method accept a callback function that will do the normal [cache steps](#normally-when-using-cache-there-is-small-workflow-involve) for you, working even if the cache is disabled. Note the callback will only be executed when cache is enable and when the given key is not in use.  
+ 
 
 ## Usage
 Install the library ```npm install cache-helper``` (library is not public in npm repo, at least not yet)  
 The recommendation is to initialize the cache in one file withing your application and export it to avoid the need of setting every time.
-```
+```TypeScript
 //utils/cache.ts consider this file
 
 //import
@@ -140,8 +147,38 @@ async function setColor(colors: string[]) {
 //now you can cache
 
 ```
+
+### Manage multiple cache instances
+Lets assume an application that use data from DB meaning querying db to read that data, but it also needs data from external services that you get from http requests.
+The DB data change very often out of users CRUD operations, however the external service data doesn't change that often. Now we want to improve performance and want to cache all data that is frequently accessed. We can use 1 *CacheHelper* instance for frequently changeable data with small TTL (expiration time) and a different instance for less changeable data with a bigger TTL (expiration time). Lets see an example.
+```TypeScript
+import { getCacheInstance } from 'cache-helper' ;
+
+//initialize cache
+const dbCache = await getCacheInstance({
+    type: 'in-memory' // for memory cache
+    cacheEnable: true, // making cache enable
+    cacheTtl: 60 // expiration time for 60 seconds
+});
+
+const httpCache = await getCacheInstance({
+    type: 'in-memory' // for memory cache
+    cacheEnable: true, // making cache enable
+    cacheTtl: 60 * 60 // expiration time for 1 hour
+});
+```
+With the above code everything cached with *dbCache* will expire in 1m, while *httpCache* cached data expires in 1hr.  
+
+### How multiple instates work
+The ```getCacheInstance(options)``` function, decides to either create and return a new instance or simply return and existing one, base on the initialization in the following fields from the options parameters:  
+* type
+* cacheTtl
+* keyPrefix
+Getting a cache helper options say from 2 different places withing your application with the same values for those 3 options will always return the same instance. Internally a Map is created base on those 3 properties, returning the the item in the map that matches those values and if there is item in the map for them, then creates a new instance and add it to the map. 
+
+
 Extra points:  
-* At cache initialization you can define *keyPrefix* then every cache key you set/get will internally prefixed 
+* At cache initialization you can define *keyPrefix* then every cache key you set/get will be internally prefixed 
 with value from *keyPrefix*. For memory cache not really important, but if you using redis you may want to set a key prefix to avoid conflict with other services that use same redis instance
 * When using cache you don't really want an error in your caching mechanism to break your app, so cache helper makes sure specially with redis that any internal issues, eg. redis instance down, does not affect app workflow 
 

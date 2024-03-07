@@ -1,5 +1,10 @@
 # In Memory Cache Class wrapper
 
+## 3.0.1
+ - fix: In memory usage - not working when providing prefix
+ - feat: Get from cache - added generic type for typescript usage
+ - test: In memory - added unit tests for in memory with key prefix
+
 ## 3.0.0
  - breaking changes: Support multiple cache instances
  - dependencies: updated

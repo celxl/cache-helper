@@ -25,7 +25,7 @@ export class InMemoryCache extends CacheHelper{
      * @param callback 
      * @returns 
      */
-    async get(key: string, callback?: ()=> any | Promise<any> ) {
+    async get<T>(key: string, callback?: ()=> T | Promise<T> ): Promise<T | null> {
         super.get(key, callback);
         
         if (!this.cache) return this.resolveCallback(callback);
@@ -34,7 +34,7 @@ export class InMemoryCache extends CacheHelper{
 
         if (!result) {
             result = await this.resolveCallback(callback);
-            (result) && this.set(this.getKey(key), result);
+            (result) && this.set(key, result);
         }
 
         return result;

@@ -68,9 +68,9 @@ export class CacheHelper {
      */
     async resolveCallback(callback?: ()=> any | Promise<any>): Promise<any> {
         let result: any = null;
-
+        
         if (typeof callback == 'function') {
-            result = callback() ;
+            result = await callback() ;
         }
 
         if (callback instanceof Promise) {
@@ -100,7 +100,8 @@ export class CacheHelper {
      * @param _callback 
      * @returns 
      */
-    async get(key: string, _callback?: ()=> any | Promise<any> ) { 
+    // @ts-ignore
+    async get<T>(key: string, _callback?: ()=> T | Promise<T> ): Promise<T | null> { 
         this.errorHandler({name: 'key', rule: ErrorHandlerRuleEnum.MANDATORY, value: key});
     }
 

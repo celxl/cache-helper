@@ -79,7 +79,7 @@ export class RedisCache extends CacheHelper {
      * @param key 
      * @returns 
      */
-    async get(key: string, callback?: () => any): Promise<any> {
+    async get<T>(key: string, callback?: () => T | Promise<T>): Promise<T | null> {
         await super.get(key, callback);
 
         if (!this.cacheEnable) return await this.resolveCallback(callback);

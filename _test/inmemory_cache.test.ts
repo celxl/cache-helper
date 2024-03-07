@@ -1,6 +1,11 @@
+
 import { CacheHelper, getCacheInstance } from '../index';
 // import { DestroyCacheInstance } from '../src/cache-factory';
 const ttl = 5
+
+type MyType = {
+    name: string;
+}
 
 describe('Class initialization - error handling', () => {
     it('Should throw error - wrong params cacheEnable type', () => {
@@ -62,28 +67,50 @@ describe('Cache usage', () => {
         expect(result).toBe(output);
     });
 
-    it('Should execute callback', async () => {
-        const callback = jest.fn(() => { return 1 });
+    it('Should call callback', async () => {
+        let a = 1;
+        const callback = async (): Promise<MyType> => {
+            // @ts-ignore
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve({name: 'hello'});
+                }, 1000);
+            });
+        };
 
-        const result = await cache.get('test1.2', () => {
-            return callback();
+        const result = await cache.get<MyType>('test1.2', async () => {
+            a ++;
+            return await callback();
         });
 
-        expect(callback).toHaveBeenCalled();
-        expect(result).toBe(1);
+        const result1 = await cache.get<MyType>('test1.2')
+
+        expect(a).toBe(2);
+        expect(result?.name).toBe('hello');
+        expect(result1?.name).toBe('hello');
 
     });
 
     it('Should not execute callback', async () => {
-        const callback = jest.fn(() => { return 1 });
+        let a = 1;
+        const callback = async (): Promise<MyType> => {
+            // @ts-ignore
+            return new Promise((resolve, reject) => {
+                console.log('if you see me test is wrong')
+                setTimeout(() => {
+                    resolve({name: 'hello'});
+                }, 1000);
+            });
+        };
 
-        cache.set('test1.3', 5);
-        const result = await cache.get('test1.3', () => {
-            return callback();
+        cache.set('test1.3', {name: 'hello'})
+        const result = await cache.get('test1.3', async () => {
+            a++;
+            return await callback();
         });
 
-        expect(callback).not.toHaveBeenCalled();
-        expect(result).toBe(5);
+        expect(a).toBe(1);
+        expect(result?.name).toBe('hello');
     });
 
     it('Should execute/wait for promise', async () => {
@@ -109,7 +136,7 @@ describe('Cache usage', () => {
 
         cache.set('test1.5', 5);
         const result = await cache.get('test1.5', () => {
-            return callback();
+            return callback()
         });
 
         expect(callback).not.toHaveBeenCalled();
@@ -187,34 +214,55 @@ describe('Cache usage', () => {
 
 });
 
-describe('Class wrong usage', () => {
-    // let cache: CacheHelper;
-    // beforeAll(async() => {
-    //     cache = await getCacheInstance({cacheEnable: true,
-     //       cacheTtl: ttl}{
-    //         cacheEnable: true,
-    //         cacheTtl: ttl,
-    //         type: "in-memory"
-    //     });
-    // });
+describe('using key prefix', () => {
+    let cache: CacheHelper;
+    let cacheNoPrefix: CacheHelper;
+    beforeAll(async() => {
+        cache = await getCacheInstance({
+            cacheEnable: true,
+            cacheTtl: ttl,
+            type: "in-memory",
+            keyPrefix: 'test'
+        });
+        cacheNoPrefix = await getCacheInstance({
+            cacheEnable: true,
+            cacheTtl: ttl,
+            type: "in-memory"
+        });
+    });
 
-    // it('Should should trow missing argument error - get', async () => {
+    it('Should should set the cache', async () => {
+        await cache.set('key1', 'hello');
+        const result = await cache.get<string>('key1');
+        const result1 = await cacheNoPrefix.get<string>('key1');
+        expect(result).toBe('hello');
+        expect(result1).toBe(null);
+    });
 
-    //     await expect( cache.get(undefined as unknown as string) )
-    //         .toThrow('Missing argument exception: key parameter is mandatory');
-    // });
+    it('Should call callback', async () => {
+        let a = 1;
+        const callback = async (): Promise<MyType> => {
+            // @ts-ignore
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve({name: 'hello'});
+                }, 1000);
+            });
+        };
 
-    // it('Should should trow missing argument error - set', async () => {
-    //     expect(async () => {
-    //         await cache.set(undefined as unknown as string, 5);
-    //     }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
-    // });
+        const result = await cache.get<MyType>('key2', async () => {
+            a ++;
+            return await callback();
+        });
 
-    // it('Should should trow missing argument error - set', async () => {
-    //     expect(async () => {
-    //          await cache.delete(undefined as unknown as string);
-    //     }).rejects.toThrow('Missing argument exception: key parameter is mandatory');
-    // });
+        const result1 = await cache.get<MyType>('key2');
 
+        const result2 = await cacheNoPrefix.get<MyType>('key2');
 
+        expect(a).toBe(2);
+        expect(result?.name).toBe('hello');
+        expect(result1?.name).toBe('hello');
+        expect(result2).toBe(null);
+
+    });
 })

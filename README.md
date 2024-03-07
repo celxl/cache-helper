@@ -62,7 +62,7 @@ async getColorList() {
 ```  
 
 The goal of cache-helper library is to simplify those steps providing less verbose way to handle the caching and a ready to use class. So better than explain lets just see the same example.
-```
+``` typescript
 //import
 import { getCacheInstance } from 'cache-helper' ;
 
@@ -82,11 +82,22 @@ async myFunction() {
     // Now do other staff that use colorList for whatever reason
 }
 
+// OR using generic types for TS
+async myFunction() {
+    let colorList: string[] = await cache.get<string[]>('color-list',  async()=>{
+        return await getColorList(); 
+    });
+    
+    // Now do other staff that use colorList for whatever reason
+}
+
 //function getting data
 async getColorList() {
   // assume this do some db query to get list of colors
   return await db.findColors();
 }
+
+
 
 ```
  
